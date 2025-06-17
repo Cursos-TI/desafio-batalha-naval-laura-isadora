@@ -1,55 +1,82 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #define TAM 10
-#define TAM_NAVIO 3
+#define TAM_HAB 5
 
-int main() {
-    int tabuleiro[TAM][TAM] = {0}; // Inicializa todas as posições com água (0)
-
-    // Coordenadas dos navios
-    int navio1_linha = 1, navio1_coluna = 2; // Horizontal
-    int navio2_linha = 5, navio2_coluna = 7; // Vertical
-    int navio3_linha = 0, navio3_coluna = 0; // Diagonal principal (↘)
-    int navio4_linha = 0, navio4_coluna = 9; // Diagonal secundária (↙)
-
-    // Validação e posicionamento do navio horizontal
-    if (navio1_coluna + TAM_NAVIO <= TAM) {
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            tabuleiro[navio1_linha][navio1_coluna + i] = 3;
-        }
-    }
-
-    // Validação e posicionamento do navio vertical
-    if (navio2_linha + TAM_NAVIO <= TAM) {
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            tabuleiro[navio2_linha + i][navio2_coluna] = 3;
-        }
-    }
-
-    // Validação e posicionamento do navio diagonal principal
-    if (navio3_linha + TAM_NAVIO <= TAM && navio3_coluna + TAM_NAVIO <= TAM) {
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[navio3_linha + i][navio3_coluna + i] == 0)
-                tabuleiro[navio3_linha + i][navio3_coluna + i] = 3;
-        }
-    }
-
-    // Validação e posicionamento do navio diagonal secundária
-    if (navio4_linha + TAM_NAVIO <= TAM && navio4_coluna - (TAM_NAVIO - 1) >= 0) {
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[navio4_linha + i][navio4_coluna - i] == 0)
-                tabuleiro[navio4_linha + i][navio4_coluna - i] = 3;
-        }
-    }
-
-    // Exibição do tabuleiro
-    printf("Tabuleiro Batalha Naval:\n");
+// Função para imprimir o tabuleiro
+void exibirTabuleiro(int tabuleiro[TAM][TAM]) {
+    printf("Tabuleiro com habilidades:\n");
     for (int i = 0; i < TAM; i++) {
         for (int j = 0; j < TAM; j++) {
             printf("%d ", tabuleiro[i][j]);
         }
         printf("\n");
     }
+    printf("\n");
+}
+
+// Função para sobrepor uma matriz de habilidade ao tabuleiro
+void aplicarHabilidade(int tabuleiro[TAM][TAM], int habilidade[TAM_HAB][TAM_HAB], int origem_linha, int origem_coluna) {
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
+            if (habilidade[i][j] == 1) {
+                int lin = origem_linha + i - TAM_HAB / 2;
+                int col = origem_coluna + j - TAM_HAB / 2;
+                if (lin >= 0 && lin < TAM && col >= 0 && col < TAM && tabuleiro[lin][col] != 3) {
+                    tabuleiro[lin][col] = 5; // Marca a área de efeito da habilidade
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    int tabuleiro[TAM][TAM] = {0};
+
+    // Posiciona navios
+    tabuleiro[1][2] = tabuleiro[1][3] = tabuleiro[1][4] = 3; // navio horizontal
+    tabuleiro[5][7] = tabuleiro[6][7] = tabuleiro[7][7] = 3; // navio vertical
+    tabuleiro[0][0] = tabuleiro[1][1] = tabuleiro[2][2] = 3; // diagonal ↘
+    tabuleiro[0][9] = tabuleiro[1][8] = tabuleiro[2][7] = 3; // diagonal ↙
+
+    // MATRIZ CONE (forma triangular para baixo)
+    int cone[TAM_HAB][TAM_HAB] = {0};
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
+            if (j >= TAM_HAB/2 - i && j <= TAM_HAB/2 + i) {
+                cone[i][j] = 1;
+            }
+        }
+    }
+
+    // MATRIZ CRUZ
+    int cruz[TAM_HAB][TAM_HAB] = {0};
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
+            if (i == TAM_HAB/2 || j == TAM_HAB/2) {
+                cruz[i][j] = 1;
+            }
+        }
+    }
+
+    // MATRIZ OCTAEDRO (losango)
+    int octaedro[TAM_HAB][TAM_HAB] = {0};
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
+            if (abs(i - TAM_HAB/2) + abs(j - TAM_HAB/2) <= TAM_HAB/2) {
+                octaedro[i][j] = 1;
+            }
+        }
+    }
+
+    // Aplicar habilidades em pontos específicos do tabuleiro
+    aplicarHabilidade(tabuleiro, cone, 4, 4);
+    aplicarHabilidade(tabuleiro, cruz, 6, 3);
+    aplicarHabilidade(tabuleiro, octaedro, 2, 6);
+
+    // Exibir resultado final
+    exibirTabuleiro(tabuleiro);
 
     return 0;
 }
